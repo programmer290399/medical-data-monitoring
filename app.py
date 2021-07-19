@@ -3,9 +3,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-data_path = "https://docs.google.com/spreadsheets/d/1QUitUwxUuxBXdyyrICIsZa2AQbvVxkH8jobi1qPs8u0/edit#gid=295594796"
-url = data_path.replace("/edit#gid=", "/export?format=csv&gid=")
+data_path_naaz = "https://docs.google.com/spreadsheets/d/1QUitUwxUuxBXdyyrICIsZa2AQbvVxkH8jobi1qPs8u0/edit#gid=295594796"
+data_path_bobby = "https://docs.google.com/spreadsheets/d/1hcZHPidIWgfaXp9S4rU3AdV8FrxY5vswjhZxm9po8k4/gviz/tq?tqx=out:csv&sheet=With-medication"
+get_url = lambda data_path : data_path.replace("/edit#gid=", "/export?format=csv&gid=")
 
+url_map = {"Naaz":get_url(data_path_naaz), "Bobby":get_url(data_path_bobby)}
 
 def make_graph(grp_name, grp):
     grp["hour"] = grp["Timestamp"].apply(lambda x: x.hour)
@@ -130,14 +132,13 @@ def make_graph(grp_name, grp):
         return [figsys, figdia]
 
 
-def get_graphs():
+def get_graphs(url):
     graphs = []
     data = pd.read_csv(url)
     data["Timestamp"] = pd.to_datetime(data["Timestamp"])
     grouped = data.groupby("Test Type")
-    for name, group in grouped:
-        if len(group) > 5:
-            graphs.extend(make_graph(name, group))
+    for name, group in grouped:    
+        graphs.extend(make_graph(name, group))
     return graphs
 
 
@@ -145,10 +146,14 @@ st.set_page_config(
     page_title="Medical Monitoring System",
     layout="wide",
 )
-# medical-viz@mom-streamlit-app.iam.gserviceaccount.com
 
+patient_name = option = st.selectbox(
+    'Patient Name',
+    ('Naaz','Bobby'))
 if st.button("Fetch Data"):
     with st.spinner("Fetching Data..."):
-        graphs = get_graphs()
+        
+        url = url_map.get(patient_name,None)
+        graphs = get_graphs(url)
     for graph in graphs:
         st.plotly_chart(graph, use_container_width=True)
