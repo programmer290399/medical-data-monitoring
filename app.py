@@ -5,9 +5,10 @@ import plotly.graph_objects as go
 
 data_path_naaz = "https://docs.google.com/spreadsheets/d/1QUitUwxUuxBXdyyrICIsZa2AQbvVxkH8jobi1qPs8u0/edit#gid=295594796"
 data_path_bobby = "https://docs.google.com/spreadsheets/d/1hcZHPidIWgfaXp9S4rU3AdV8FrxY5vswjhZxm9po8k4/gviz/tq?tqx=out:csv&sheet=With-medication"
-get_url = lambda data_path : data_path.replace("/edit#gid=", "/export?format=csv&gid=")
+get_url = lambda data_path: data_path.replace("/edit#gid=", "/export?format=csv&gid=")
 
-url_map = {"Naaz":get_url(data_path_naaz), "Bobby":get_url(data_path_bobby)}
+url_map = {"Naaz": get_url(data_path_naaz), "Bobby": get_url(data_path_bobby)}
+
 
 def make_graph(grp_name, grp):
     grp["hour"] = grp["Timestamp"].apply(lambda x: x.hour)
@@ -56,7 +57,7 @@ def make_graph(grp_name, grp):
     else:
         figsys = go.Figure()
         figdia = go.Figure()
-        grp[["SYS", "DIA"]] = grp["Recorded Value"].str.split(",", 1, expand=True)
+        grp[["SYS", "DIA"]] = grp["Recorded Value"].str.split(",", n=1, expand=True)
         grp["SYS"] = pd.to_numeric(grp["SYS"])
         grp["DIA"] = pd.to_numeric(grp["DIA"])
         grp["sma_sys"] = grp["SYS"].rolling(9).mean().rolling(5).mean()
@@ -137,7 +138,7 @@ def get_graphs(url):
     data = pd.read_csv(url)
     data["Timestamp"] = pd.to_datetime(data["Timestamp"])
     grouped = data.groupby("Test Type")
-    for name, group in grouped:    
+    for name, group in grouped:
         graphs.extend(make_graph(name, group))
     return graphs
 
@@ -147,13 +148,11 @@ st.set_page_config(
     layout="wide",
 )
 
-patient_name = option = st.selectbox(
-    'Patient Name',
-    ('Naaz','Bobby'))
+patient_name = option = st.selectbox("Patient Name", ("Naaz", "Bobby"))
 if st.button("Fetch Data"):
     with st.spinner("Fetching Data..."):
-        
-        url = url_map.get(patient_name,None)
+
+        url = url_map.get(patient_name, None)
         graphs = get_graphs(url)
     for graph in graphs:
         st.plotly_chart(graph, use_container_width=True)
